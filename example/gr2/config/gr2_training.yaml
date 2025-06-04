@@ -1,0 +1,37 @@
+Gr2Locomotion_Config:
+  dt: 0.01 
+  control_freq : 100
+  robot_joint_num: 29
+  control_joint_num: 12
+
+  default_pos: [
+   [-0.26,  0.00,  0.00,   0.52,   -0.26,   0.00],
+   [-0.26,  0.00,  0.00,   0.52,   -0.26,   0.00]
+   ]
+  kp_joint_space: [
+   [300.0, 180.0, 120.0, 350.0, 10.0, 15.0],
+   [300.0, 180.0, 120.0, 350.0, 10.0, 15.0],
+  ]
+  kd_joint_space: [
+   [ 15.0, 18.0, 12.0, 26.5, 7.0, 5.0],
+   [ 15.0, 18.0, 12.0, 26.5, 7.0, 5.0]
+  ]
+Gr2LocomotionPolicy_Config:
+  policy_path: "policy/policy_1.pt"
+  obs_scales_lin_vel: 2.0 
+  obs_scales_ang_vel: 1.0
+  obs_scale_gravity: 1.0 
+  obs_scale_joint_pos: 1.0 
+  obs_scale_joint_vel: 0.05 
+  obs_scale_height_measurements: 5.0 
+  obs_scale_action: 1.0 
+  act_scale_action: [
+   0.25,0.25,0.25,0.25,0.25,0.25,
+   0.25,0.25,0.25,0.25,0.25,0.25
+  ]
+  num_actor_obs: 36   
+  num_actor_hist: 10 
+  # define safe command range
+  command_vel_x_range: [-0.50, 0.50]
+  command_vel_y_range: [-0.3, 0.3]
+  command_vel_yaw_range: [-0.3, 0.3]

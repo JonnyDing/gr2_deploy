@@ -37,6 +37,11 @@ SimpleLocoTask::~SimpleLocoTask()
 bool SimpleLocoTask::init(RobotData& data){
     std::cout <<"           Init Simple Loco Task ..." << std::endl;
     std::cout <<"           Init Simple Loco Task Done" << std::endl;
+    // output basic robot_data 
+    std::cout<<"the mass of robot"<<data.kindynData.m<<std::endl;
+    std::cout<<"base pos in world frame"<<data.baseData.pos_W<<std::endl;
+    std::cout<<"base euler / rad"<<data.baseData.rpy<<std::endl;
+    
     return true;
 }
 

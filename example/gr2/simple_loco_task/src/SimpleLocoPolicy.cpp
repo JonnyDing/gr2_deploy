@@ -3,6 +3,7 @@
 void SimpleLocoPolicy::init(RobotData& data){
     std::cout <<"           Init Simple Loco Policy Start" << std::endl;
     dt_ = simple_loco_parameter_->dt;
+    std::cout<<"control_dt: "<<dt_<<std::endl;
     control_freq_ = simple_loco_parameter_->control_freq;
 
     gait_generator_ = std::make_unique<GaitGenerator>(simple_loco_parameter_);
@@ -13,7 +14,7 @@ void SimpleLocoPolicy::init(RobotData& data){
     num_actor_hist_ = simple_loco_parameter_->num_actor_hist;
     num_action_joint_control_ = simple_loco_parameter_->control_joint_num;
     std::cout<<"num_action_joint_control_: "<<num_action_joint_control_<<std::endl;
-
+    // device : cpu
     device_ = new torch::Device(torch::kCPU);
     policy_ = torch::jit::load(simple_loco_parameter_->policy_path);
     policy_.to(*device_);
@@ -229,6 +230,9 @@ void SimpleLocoPolicy::updateBuffer(RobotData& data){
     joint_pos_meas_ = robot_state_fixed.q.head(num_action_joint_control_);
     joint_vel_meas_ = robot_state_fixed.qd.head(num_action_joint_control_);
     joint_pos_meas_def_diff_ = joint_pos_meas_ - control_joint_default_pos_;
+    // output params
+    // tau
+    //std::cout<<data.generState.tau.head(num_action_joint_control_-1)
 
 }
 
