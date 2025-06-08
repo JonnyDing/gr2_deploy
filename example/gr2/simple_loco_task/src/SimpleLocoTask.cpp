@@ -11,7 +11,7 @@ SimpleLocoTask::SimpleLocoTask(RobotData& data): TaskInterface(data)
     auto* simple_loco_parameter = dynamic_cast<SimpleLocoParameter*>(config_.getTaskParameter("simple_loco_parameter"));
 
     dt_ = simple_loco_parameter->dt;
-
+    cycle_time = SimpleLocoParameter->cycle_time;
     control_freq_ = simple_loco_parameter->control_freq;
 
     robot_joint_num_ = simple_loco_parameter->robot_joint_num;

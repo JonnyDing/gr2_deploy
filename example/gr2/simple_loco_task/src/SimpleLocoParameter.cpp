@@ -1,7 +1,7 @@
 #include "SimpleLocoParameter.hpp" 
 
 void SimpleLocoParameter::load(const std::string& filename) {
-    std::cout<<"Loading Parameter from "<<filename<<"SimpleLocoTask/config_gr2_mix.yaml"<<std::endl;
+    std::cout<<"Loading Parameter from "<<filename<<"SimpleLocoTask/config_gr2_locomotion.yaml"<<std::endl;
     base_config_file_path = filename;
     config_file_path = base_config_file_path + "SimpleLocoTask/config_gr2_mix.yaml";
     YAML::Node config = YAML::LoadFile(config_file_path);
@@ -15,7 +15,7 @@ void SimpleLocoParameter::loadSimpleLocoTaskConfig(const YAML::Node& config) {
     try {
         dt = config["SimpleLocoRLTask_Config"]["dt"].as<double>();
         control_freq = config["SimpleLocoRLTask_Config"]["control_freq"].as<double>();
-
+        cycle_time = confif["SimpleLocoRLTask_Config"]["cycle_time"].as<double>();
         robot_joint_num = config["SimpleLocoRLTask_Config"]["robot_joint_num"].as<int>();
         control_joint_num = config["SimpleLocoRLTask_Config"]["control_joint_num"].as<int>();
         
@@ -106,43 +106,3 @@ void SimpleLocoParameter::loadRlPolicyConfig(const YAML::Node& config) {
     }
 }
 
-void SimpleLocoParameter::loadGaitConfig(const YAML::Node& config) {
-    try {
-        YAML::Node gaitConfig = config["Gait_Config"];
-        YAML::Node gaitPatterns = gaitConfig["Gait_pattern"];
-
-        num_legs = gaitConfig["num_legs"].as<int>();
-        step_period = gaitConfig["step_period"].as<double>();
-
-        reference_speed = gaitConfig["reference_speed"].as<double>();
-
-        cycle_r_min = gaitConfig["cycle_r_range"][0].as<double>();
-        cycle_r_max = gaitConfig["cycle_r_range"][1].as<double>();
-
-        coff_b = gaitConfig["coff_b"].as<double>();
-        rate_xy = gaitConfig["rate_xy"].as<double>();
-        
-        for (const auto& gaitEntry : gaitPatterns) {
-            std::string patternName = gaitEntry.first.as<std::string>();
-            YAML::Node patternNode = gaitEntry.second;
-
-            gait_patterns.push_back(patternName);
-
-            // 读取标量参数
-            gait_pattern_freq[patternName] = patternNode["step_freq"].as<double>();
-            gait_pattern_cycle_r[patternName] = patternNode["cycle_r"].as<double>();
-            gait_pattern_coupling_change_rate[patternName] = patternNode["coupling_change_rate"].as<double>();
-            gait_pattern_amplitude_change_rate[patternName] = patternNode["amplitude_change_rate"].as<double>();
-            gait_pattern_amplitude_change_rate[patternName] = std::pow(gait_pattern_amplitude_change_rate[patternName], (dt / 0.001));
-
-            // 读取向量参数
-            gait_pattern_phase_offset_target[patternName] = yamlSequenceToVector(patternNode["phase_offset_target"]);
-            gait_pattern_contact_ratio[patternName] = yamlSequenceToVector(patternNode["contact_ratio"]);
-        }
-
-    }
-    catch (const std::exception& e) {
-        std::cerr << "Failed to load gait config " << ": " << e.what() << std::endl;
-        exit(0);
-    }
-}

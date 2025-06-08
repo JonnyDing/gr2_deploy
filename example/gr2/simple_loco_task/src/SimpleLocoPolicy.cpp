@@ -3,18 +3,16 @@
 void SimpleLocoPolicy::init(RobotData& data){
     std::cout <<"           Init Simple Loco Policy Start" << std::endl;
     dt_ = simple_loco_parameter_->dt;
-    std::cout<<"control_dt: "<<dt_<<std::endl;
     control_freq_ = simple_loco_parameter_->control_freq;
-
-    gait_generator_ = std::make_unique<GaitGenerator>(simple_loco_parameter_);
-    gait_generator_->init(data);
-    stand_hold_time_ = 0;
+    cycle_time = simple_loco_parameter_->cycle_time;
+    step_count_ = 0;
+   
 
     num_actor_obs_ = simple_loco_parameter_->num_actor_obs;
     num_actor_hist_ = simple_loco_parameter_->num_actor_hist;
     num_action_joint_control_ = simple_loco_parameter_->control_joint_num;
     std::cout<<"num_action_joint_control_: "<<num_action_joint_control_<<std::endl;
-    // device : cpu
+
     device_ = new torch::Device(torch::kCPU);
     policy_ = torch::jit::load(simple_loco_parameter_->policy_path);
     policy_.to(*device_);
@@ -66,8 +64,8 @@ void SimpleLocoPolicy::init(RobotData& data){
     base_rpy_vel_to_self_ = Eigen::VectorXd::Zero(3);
     base_xyz_vel_to_world_ = Eigen::VectorXd::Zero(3);
     base_quat_to_world_ = Eigen::Quaterniond::Identity();
-    base_project_gravity_ = Eigen::VectorXd::Zero(3);
-
+    // base_project_gravity_ = Eigen::VectorXd::Zero(3);
+    base_euler = Eigen::VectorXd::Zero(3);
     // 目标关节位置偏移
     target_joint_position_offset_ = Eigen::VectorXd::Zero(num_action_joint_control_);
     action_target_joint_position_ = Eigen::VectorXd::Zero(num_action_joint_control_);
@@ -95,12 +93,12 @@ void SimpleLocoPolicy::runPolicy(RobotData& data)
 {
     robot_motion_command_ = data.joyStick.liner_cmd;
     
-    gait_generator_->step();
+    // gait_generator_->step();
 
-    updateSimpleLocoState();
-    if(simple_loco_state_ == SimpleLocoState::STAND){
-        robot_motion_command_.setZero(3);
-    }
+    // updateSimpleLocoState();
+    // if(simple_loco_state_ == SimpleLocoState::STAND){
+    //     robot_motion_command_.setZero(3);
+    // }
 
     updateBuffer(data);
 
@@ -111,7 +109,7 @@ void SimpleLocoPolicy::runPolicy(RobotData& data)
 void SimpleLocoPolicy::exit(RobotData& data){
 
     simple_loco_state_ = SimpleLocoState::IDLE;
-    gait_generator_->setGaitPattern(GaitPatterns::GAIT_PATTERN_OFF);
+    // gait_generator_->setGaitPattern(GaitPatterns::GAIT_PATTERN_OFF);
 }
 
 
@@ -149,7 +147,7 @@ void SimpleLocoPolicy::initActor(){
 void SimpleLocoPolicy::prepareActorInput(){
     act_in_cmds_ = robot_motion_command_;
     act_in_base_ang_vel_ = base_rpy_vel_to_self_;
-    act_in_base_proj_grav_ = base_project_gravity_;
+    rpy_in_base_ = base_euler;
     act_in_meas_q_pos_def_diff_ = joint_pos_meas_def_diff_;
     act_in_meas_q_vel_ = joint_vel_meas_;
     act_in_action_eigen_ = eigen_act_out_;
@@ -159,24 +157,26 @@ void SimpleLocoPolicy::prepareActorInput(){
 }   
 
 void SimpleLocoPolicy::constructActorObs(){
+    float phase = step_count_*dt_/cycle_time_;
+    double sin_pos =  
     Eigen::Vector3d input_commands_scaled = act_in_cmds_.cwiseProduct(obs_scales_command_);
     Eigen::Vector3d input_base_angular_velocity_scaled = act_in_base_ang_vel_ * obs_scales_ang_vel_;
-    Eigen::Vector3d input_base_projected_gravity_scaled = act_in_base_proj_grav_ * obs_scale_gravity_;
+    // Eigen::Vector3d input_base_projected_gravity_scaled = act_in_base_proj_grav_ * obs_scale_gravity_;
+    Eigen::Vector3d input_base_euler_scaled = base_euler * obs_scale_gravity_;
     Eigen::VectorXd input_measured_joint_pos_def_diff_scaled = act_in_meas_q_pos_def_diff_ * obs_scale_joint_pos_;
     Eigen::VectorXd input_measured_joint_velocity_scaled = act_in_meas_q_vel_ * obs_scale_joint_vel_;
     Eigen::VectorXd input_action_scaled = act_in_action_eigen_ * obs_scale_action_;
     // std::cout << "act_in_gait_x_: " << act_in_gait_x_.transpose() << std::endl;
-    Eigen::Vector2d input_gait_x = act_in_gait_x_;
-    Eigen::Vector2d input_gait_y = act_in_gait_y_;
+    // Eigen::Vector2d input_gait_x = act_in_gait_x_;
+    // Eigen::Vector2d input_gait_y = act_in_gait_y_;
     Eigen::VectorXd current_input = Eigen::VectorXd::Zero(num_actor_obs_);
     current_input << input_commands_scaled, 
-                    input_base_angular_velocity_scaled, 
-                    input_base_projected_gravity_scaled, 
                     input_measured_joint_pos_def_diff_scaled, 
                     input_measured_joint_velocity_scaled, 
                     input_action_scaled, 
-                    input_gait_x, 
-                    input_gait_y;
+                    input_base_angular_velocity_scaled, 
+                    input_base_euler_scaled;
+      
 
     term_hist_deque_->push(current_input);
     act_in_ = term_hist_deque_->toDoubleVector();
@@ -186,6 +186,7 @@ void SimpleLocoPolicy::constructActorObs(){
 void SimpleLocoPolicy::executeActorNN(){
     act_out_tensor_ = policy_.forward({act_in_tensor_}).toTensor().to(*device_);
     auto act_out_raw_tensor = act_out_tensor_.detach();
+    // copy action data from start pointer of action[0] to end pointer of action[num_action_joint_control_ - 1]
     std::vector<float> result(act_out_raw_tensor.data_ptr<float>(), act_out_raw_tensor.data_ptr<float>() + act_out_raw_tensor.numel());
     for(int i = 0; i < result.size(); i++) {
         eigen_act_out_raw_[i] = double(result[i]);
@@ -225,49 +226,48 @@ void SimpleLocoPolicy::updateBuffer(RobotData& data){
 
     Eigen::VectorXd quat_wxyz = data.baseData.quat_wxyz;
     base_quat_to_world_ = Eigen::Quaterniond(quat_wxyz[0], quat_wxyz[1], quat_wxyz[2], quat_wxyz[3]);
-    base_project_gravity_ = data.baseData.grav_proj;
+    // base_project_gravity_ = data.baseData.grav_proj;
+    base_euler = data.baseData.rpy;
     base_rpy_vel_to_self_ = data.baseData.omega_B;
     joint_pos_meas_ = robot_state_fixed.q.head(num_action_joint_control_);
     joint_vel_meas_ = robot_state_fixed.qd.head(num_action_joint_control_);
     joint_pos_meas_def_diff_ = joint_pos_meas_ - control_joint_default_pos_;
-    // output params
-    // tau
-    //std::cout<<data.generState.tau.head(num_action_joint_control_-1)
+    step_count_++;
 
 }
 
 
-void SimpleLocoPolicy::updateSimpleLocoState(){
-    // 更新行走/站立状态
-    bool is_stand_vel_cmd_condition = (robot_motion_command_.head(2).norm() <= 0.1) && 
-                                      (std::abs(robot_motion_command_[2]) <= 0.1);
+// void SimpleLocoPolicy::updateSimpleLocoState(){
+//     // 更新行走/站立状态
+//     bool is_stand_vel_cmd_condition = (robot_motion_command_.head(2).norm() <= 0.1) && 
+//                                       (std::abs(robot_motion_command_[2]) <= 0.1);
 
-    if (is_stand_vel_cmd_condition == true) {
-        stand_hold_time_ += dt_;
-        if (stand_hold_time_ >= 1.5 * gait_generator_->gait_period_) {
-            simple_loco_state_ = SimpleLocoState::STAND;
-        }
-    } else {
-        stand_hold_time_ = 0;
-    }
+//     if (is_stand_vel_cmd_condition == true) {
+//         stand_hold_time_ += dt_;
+//         if (stand_hold_time_ >= 1.5 * gait_generator_->gait_period_) {
+//             simple_loco_state_ = SimpleLocoState::STAND;
+//         }
+//     } else {
+//         stand_hold_time_ = 0;
+//     }
 
-    auto gait_pattern = gait_generator_->getCurrentGaitPattern();
-    if (simple_loco_state_ == SimpleLocoState::STAND && gait_pattern != GaitPatterns::GAIT_PATTERN_STAND) {
-        gait_generator_->setGaitPattern(GaitPatterns::GAIT_PATTERN_STAND);
-    }
+//     auto gait_pattern = gait_generator_->getCurrentGaitPattern();
+//     if (simple_loco_state_ == SimpleLocoState::STAND && gait_pattern != GaitPatterns::GAIT_PATTERN_STAND) {
+//         gait_generator_->setGaitPattern(GaitPatterns::GAIT_PATTERN_STAND);
+//     }
 
 
-    bool is_walk_vel_cmd_condition = (robot_motion_command_.head(2).norm() > 0.1) || 
-                                     (std::abs(robot_motion_command_[2]) > 0.1);
+//     bool is_walk_vel_cmd_condition = (robot_motion_command_.head(2).norm() > 0.1) || 
+//                                      (std::abs(robot_motion_command_[2]) > 0.1);
 
-    if (is_walk_vel_cmd_condition == true) {
-        simple_loco_state_ = SimpleLocoState::WALK;
-    }
+//     if (is_walk_vel_cmd_condition == true) {
+//         simple_loco_state_ = SimpleLocoState::WALK;
+//     }
 
-    if (simple_loco_state_ == SimpleLocoState::WALK && gait_pattern != GaitPatterns::GAIT_PATTERN_WALK) {
-        gait_generator_->setGaitPattern(GaitPatterns::GAIT_PATTERN_WALK);
-    }
-}
+//     if (simple_loco_state_ == SimpleLocoState::WALK && gait_pattern != GaitPatterns::GAIT_PATTERN_WALK) {
+//         gait_generator_->setGaitPattern(GaitPatterns::GAIT_PATTERN_WALK);
+//     }
+// }
 
 
 void SimpleLocoPolicy::CommandFilter(Eigen::VectorXd& command){

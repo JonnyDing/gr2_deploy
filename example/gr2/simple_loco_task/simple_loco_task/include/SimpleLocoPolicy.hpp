@@ -55,7 +55,7 @@ public:
     void initBuffer(const Eigen::VectorXd& init_output);
     void updateBuffer(RobotData& data);
 
-    void updateSimpleLocoState();
+    // void updateSimpleLocoState();
 
 
     void CommandFilter(Eigen::VectorXd& command);
@@ -68,6 +68,7 @@ private:
 
     double dt_;
     double control_freq_;
+    double cycle_time_;
 
     Eigen::VectorXd control_joint_default_pos_;
     Eigen::VectorXd control_joint_kp_;
@@ -93,6 +94,7 @@ private:
     Eigen::VectorXd act_in_cmds_;
     Eigen::VectorXd act_in_base_ang_vel_;
     Eigen::VectorXd act_in_base_proj_grav_;
+    Eigen::VectorXd rpy_in_base_;
     Eigen::VectorXd act_in_meas_q_pos_def_diff_;
     Eigen::VectorXd act_in_meas_q_vel_;
     Eigen::VectorXd act_in_action_eigen_;
@@ -146,8 +148,7 @@ private:
 
     std::unique_ptr<SuperDeque> term_hist_deque_;
     
-    std::unique_ptr<GaitGenerator> gait_generator_;
-    double stand_hold_time_;
+   
     SimpleLocoState simple_loco_state_;
 
     SimpleLocoParameter* simple_loco_parameter_;
