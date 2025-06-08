@@ -1,0 +1,71 @@
+
+SimpleLocoRLTask_Config:
+  dt: 0.01 # 时间步长
+  control_freq: 100 # 控制频率
+  
+  cylce_time: 0.64
+
+  robot_joint_num: 29 # 机器人关节数量
+  control_joint_num: 12 # 6+6+1 实际控制关节数量
+
+  default_pos: [
+    [-026,  0.00,  0.00,   0.52,   -0.26,   0.00],
+    [-0.26,  0.00,  0.00,   0.52,   -0.26,   0.00],
+  ]
+
+  kp_joint_space: [
+    [300.0, 180.0, 120.0, 350.0, 10.0, 15.0],
+    [300.0, 180.0, 120.0, 350.0, 10.0, 15.0]
+  ] 
+  kd_joint_space: [
+    [15, 18, 12, 26.5, 7,5],
+    [15, 18, 12, 26.5, 7,5]
+  ] 
+
+
+SimpleLocoRLPolicy_Config:
+  policy_path: "policy/gr2_loco.pt"
+  obs_scales_lin_vel: 2.0 
+  obs_scales_ang_vel: 1.0
+  obs_scale_gravity: 1.0 
+  obs_scale_joint_pos: 1.0 
+  obs_scale_joint_vel: 0.05 
+  obs_scale_height_measurements: 5.0 
+  obs_scale_action: 1.0 
+  act_scale_action: [
+   0.25,0.25, 0.25, 0.25, 0.25, 0.25,
+   0.25,0.25, 0.25, 0.25, 0.25, 0.25,
+  ]
+
+  num_actor_obs: 47 
+  num_actor_hist: 15 
+
+  command_filter_cf: 0.5
+
+  command_safety_ratio: 0.9
+  command_vel_x_range: [-0.40, 0.40]
+  command_vel_y_range: [-0.40, 0.40]
+  command_vel_yaw_range: [-0.40, 0.40]
+
+
+  actor_output_max: [
+    10, 10, 10, 10, 10, 10,
+    10, 10, 10, 10, 10, 10
+  ]
+  actor_output_min: [
+    -10, -10, -10, -10, -10, -10,
+    -10, -10, -10, -10, -10, -10
+  ]
+
+  actor_output_clip_margin_max: [
+    8.0, 8.0, 8.0, 8.0, 8.0, 8.0,
+    8.0, 8.0, 8.0, 8.0, 8.0, 8.0
+  ]
+  actor_output_clip_margin_min: [    
+    -8.0, -8.0, -8.0, -8.0, -8.0, -8.0,
+    -8.0, -8.0, -8.0, -8.0, -8.0, -8.0
+  ]
+
+
+
+
