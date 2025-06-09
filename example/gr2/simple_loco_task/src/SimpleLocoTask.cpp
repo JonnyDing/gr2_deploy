@@ -68,12 +68,19 @@ bool SimpleLocoTask::enter(RobotData& data){
 
 void SimpleLocoTask::execute(RobotData& data)
 {
+     auto start_time = std::chrono::steady_clock::now();
     simple_loco_policy_->runPolicy(data);
     Eigen::VectorXd action_command = simple_loco_policy_->getActionCommand();
 
     robot_q_cmd_.head(control_joint_num_) = action_command;
 
     data.hardwareData.setWholeBodyPosCmd(robot_q_cmd_);
+    auto end_time = std::chrono::steady_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time).count();
+    std::cout<< "Simple Loco Task executed in: " << duration << " seconds" << std::endl;
+    if (duration < dt_) {
+        std::this_thread::sleep_for(std::chrono::duration<double>(dt - duration));
+    }
 }
 
 

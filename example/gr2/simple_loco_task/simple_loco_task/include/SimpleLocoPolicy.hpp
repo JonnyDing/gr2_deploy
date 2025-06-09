@@ -23,7 +23,6 @@
 #include <torch/torch.h>
 #include <torch/script.h>
 #include "SimpleLocoParameter.hpp"
-#include "GaitGenerator.hpp"
 
 // 具体任务实现
 class SimpleLocoPolicy : public PolicyParent {
@@ -69,7 +68,7 @@ private:
     double dt_;
     double control_freq_;
     double cycle_time_;
-
+    long long step_count_;
     Eigen::VectorXd control_joint_default_pos_;
     Eigen::VectorXd control_joint_kp_;
     Eigen::VectorXd control_joint_kd_;

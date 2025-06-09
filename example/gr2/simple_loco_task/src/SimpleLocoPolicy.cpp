@@ -236,7 +236,8 @@ void SimpleLocoPolicy::updateBuffer(RobotData& data){
     joint_pos_meas_ = robot_state_fixed.q.head(num_action_joint_control_);
     joint_vel_meas_ = robot_state_fixed.qd.head(num_action_joint_control_);
     joint_pos_meas_def_diff_ = joint_pos_meas_ - control_joint_default_pos_;
-    step_count_++;
+    if (task_state_ == SimpleLocoTaskState::RUNNING)
+        step_count_++;
 
 }
 

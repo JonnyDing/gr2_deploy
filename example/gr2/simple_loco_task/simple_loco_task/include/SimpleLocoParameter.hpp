@@ -70,31 +70,14 @@ public:
     Eigen::Vector2d command_vel_y_range;
     Eigen::Vector2d command_vel_yaw_range;
 
+    double cycle_time;
 
-    // Gait parameters
-    int num_legs;
-    double step_period;
-    double reference_speed;
-    double cycle_r_min;
-    double cycle_r_max;
-    double coff_b;
-    double rate_xy;
-
-    std::vector<std::string> gait_patterns;
-    std::map<std::string, double> gait_pattern_freq;
-    std::map<std::string, double> gait_pattern_cycle_r;
-    std::map<std::string, double> gait_pattern_coupling_change_rate;
-    std::map<std::string, double> gait_pattern_amplitude_change_rate;
-    std::map<std::string, Eigen::VectorXd> gait_pattern_phase_offset_target;
-    std::map<std::string, Eigen::VectorXd> gait_pattern_contact_ratio;
-    
 
  
  public:
     void load(const std::string& filename) override;
     void loadSimpleLocoTaskConfig(const YAML::Node& config);
     void loadRlPolicyConfig(const YAML::Node& config);
-    void loadGaitConfig(const YAML::Node& config);
 
     Eigen::VectorXd yamlSequenceToVector(const YAML::Node& node) {
         Eigen::VectorXd vec(node.size());

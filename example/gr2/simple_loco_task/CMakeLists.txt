@@ -23,9 +23,9 @@ add_library(runner_task_SimpleLocoTask SHARED
     ${SIMPLE_LOCO_TASK_SOURCE_FILES}
 )
 
-add_library(GaitGenerator SHARED IMPORTED)
+# add_library(GaitGenerator SHARED IMPORTED)
 set_target_properties(GaitGenerator PROPERTIES
-    IMPORTED_LOCATION "${CMAKE_CURRENT_SOURCE_DIR}/lib/libGaitGenerator.so"
+    # IMPORTED_LOCATION "${CMAKE_CURRENT_SOURCE_DIR}/lib/libGaitGenerator.so"
     INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR}/simple_loco_task/include/"
 )
 
@@ -50,12 +50,12 @@ PUBLIC
     ${fourier_hardware_LIBRARIES}
     ${grx_sot_LIBRARIES}
     fastdds
-    GaitGenerator
+    # GaitGenerator
 )
 
 link_directories(${CMAKE_CURRENT_SOURCE_DIR}/lib)
 
-install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/lib/libGaitGenerator.so
+install(FILES 
     DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/user_task_lib
     PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
 )
