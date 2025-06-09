@@ -151,14 +151,16 @@ void SimpleLocoPolicy::prepareActorInput(){
     act_in_meas_q_pos_def_diff_ = joint_pos_meas_def_diff_;
     act_in_meas_q_vel_ = joint_vel_meas_;
     act_in_action_eigen_ = eigen_act_out_;
-    act_in_gait_x_ = gait_generator_->getXNorm();
+    // act_in_gait_x_ = gait_generator_->getXNorm();
     // std::cout << "act_in_gait_x_: " << act_in_gait_x_.transpose() << std::endl;
-    act_in_gait_y_ = gait_generator_->getYNorm();
+    // act_in_gait_y_ = gait_generator_->getYNorm();
 }   
 
 void SimpleLocoPolicy::constructActorObs(){
     float phase = step_count_*dt_/cycle_time_;
-    double sin_pos =  
+    double sin_pos =  std::sin(2 * M_PI * phase);
+    double cos_pos =  std::cos(2 * M_PI * phase);
+    std::cout << "reference sin_pos: " << sin_pos << std::endl;
     Eigen::Vector3d input_commands_scaled = act_in_cmds_.cwiseProduct(obs_scales_command_);
     Eigen::Vector3d input_base_angular_velocity_scaled = act_in_base_ang_vel_ * obs_scales_ang_vel_;
     // Eigen::Vector3d input_base_projected_gravity_scaled = act_in_base_proj_grav_ * obs_scale_gravity_;
@@ -170,7 +172,9 @@ void SimpleLocoPolicy::constructActorObs(){
     // Eigen::Vector2d input_gait_x = act_in_gait_x_;
     // Eigen::Vector2d input_gait_y = act_in_gait_y_;
     Eigen::VectorXd current_input = Eigen::VectorXd::Zero(num_actor_obs_);
-    current_input << input_commands_scaled, 
+    current_input <<sin_pos, 
+                    cos_pos,
+                    input_commands_scaled, 
                     input_measured_joint_pos_def_diff_scaled, 
                     input_measured_joint_velocity_scaled, 
                     input_action_scaled, 
