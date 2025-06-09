@@ -29,9 +29,9 @@ Gr2LocomotionPolicy_Config:
    0.25,0.25,0.25,0.25,0.25,0.25,
    0.25,0.25,0.25,0.25,0.25,0.25
   ]
-  num_actor_obs: 36   
-  num_actor_hist: 10 
+  num_actor_obs: 47   
+  num_actor_hist: 15
   # define safe command range
-  command_vel_x_range: [-0.50, 0.50]
-  command_vel_y_range: [-0.3, 0.3]
-  command_vel_yaw_range: [-0.3, 0.3]
+  command_vel_x_range: [-0.20, 0.20]
+  command_vel_y_range: [-0.20, 0.20]
+  command_vel_yaw_range: [-0.20, 0.20]
